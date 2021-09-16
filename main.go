@@ -109,7 +109,7 @@ func main() {
 	} else {
 		log.Printf("Notifying %v", *hookPtr)
 	}
-	Notify(Patch{}, "")
+	Notify(Patch{}, *hookPtr)
 
 	for {
 		time.Sleep(30 * time.Second)
