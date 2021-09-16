@@ -97,6 +97,8 @@ func main() {
 	sourcePtr := flag.String("url", "https://www.dota2.com/datafeed/patchnoteslist", "url to fetch patchnotes from")
 	patch_list := PatchList{}
 	var current_patch Patch
+
+	flag.Parse()
 	LoadPatches(&patch_list, *sourcePtr)
 
 	current_patch = patch_list.Patches[len(patch_list.Patches)-1]
@@ -104,6 +106,8 @@ func main() {
 	log.Printf("Starting on patch %v", current_patch.PatchNumber)
 	if *hookPtr == "" {
 		log.Println("No webhook set, not notifying")
+	} else {
+		log.Printf("Notifying %v", *hookPtr)
 	}
 	Notify(Patch{}, "")
 
