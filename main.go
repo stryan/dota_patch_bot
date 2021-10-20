@@ -27,8 +27,13 @@ func LoadPatches(pl *PatchList, url string) {
 	res, err := http.Get(url)
 	defer res.Body.Close()
 	if err != nil {
-		log.Println(err)
-		return
+		log.Printf("Got %v, retrying in 5s", err)
+		time.Sleep(5 * time.Second)
+		res, err = http.Get(url)
+		if err != nil {
+			log.Printf("Got %v, not trying again", err)
+			return
+		}
 	}
 	body, readErr := ioutil.ReadAll(res.Body)
 	if readErr != nil {
@@ -101,6 +106,10 @@ func main() {
 	flag.Parse()
 	LoadPatches(&patch_list, *sourcePtr)
 
+	if len(patch_list.Patches) <= 0 {
+		log.Fatal("error getting initial patch list")
+	}
+
 	current_patch = patch_list.Patches[len(patch_list.Patches)-1]
 	log.Println("Started bot, loaded patch list")
 	log.Printf("Starting on patch %v", current_patch.PatchNumber)
@@ -114,13 +123,15 @@ func main() {
 	for {
 		time.Sleep(30 * time.Second)
 		LoadPatches(&patch_list, *sourcePtr)
-		newest_patch := patch_list.Patches[len(patch_list.Patches)-1]
-		if newest_patch.PatchNumber != current_patch.PatchNumber {
-			current_patch = newest_patch
-			if *hookPtr != "" {
-				Notify(current_patch, *hookPtr)
-			} else {
-				log.Printf("Patch %v found, no webhook\n", current_patch.PatchNumber)
+		if len(patch_list.Patches) > 0 {
+			newest_patch := patch_list.Patches[len(patch_list.Patches)-1]
+			if newest_patch.PatchNumber != current_patch.PatchNumber {
+				current_patch = newest_patch
+				if *hookPtr != "" {
+					Notify(current_patch, *hookPtr)
+				} else {
+					log.Printf("Patch %v found, no webhook\n", current_patch.PatchNumber)
+				}
 			}
 		}
 	}
