@@ -25,7 +25,6 @@ type Patch struct {
 
 func LoadPatches(pl *PatchList, url string) {
 	res, err := http.Get(url)
-	defer res.Body.Close()
 	if err != nil {
 		log.Printf("Got %v, retrying in 5s", err)
 		time.Sleep(5 * time.Second)
@@ -35,6 +34,8 @@ func LoadPatches(pl *PatchList, url string) {
 			return
 		}
 	}
+	defer res.Body.Close()
+
 	body, readErr := ioutil.ReadAll(res.Body)
 	if readErr != nil {
 		log.Fatal(readErr)
