@@ -11,11 +11,11 @@ import (
 	"time"
 )
 
-type PatchList struct {
-	Patches []Patch `json:"patches"`
+type patchList struct {
+	Patches []patch `json:"patches"`
 	Success bool    `json:"success"`
 }
-type Patch struct {
+type patch struct {
 	PatchNumber        string `json:"patch_number"`
 	PatchName          string `json:"patch_name"`
 	PatchTimestamp     int    `json:"patch_timestamp"`
@@ -23,7 +23,7 @@ type Patch struct {
 	PatchWebsiteAnchor string `json:"patch_website_anchor,omitempty"`
 }
 
-func LoadPatches(pl *PatchList, url string) {
+func loadPatches(pl *patchList, url string) {
 	res, err := http.Get(url)
 	if err != nil {
 		log.Printf("Got %v, retrying in 5s", err)
@@ -46,7 +46,7 @@ func LoadPatches(pl *PatchList, url string) {
 	}
 }
 
-func Notify(patch Patch, url string) {
+func notify(ptch patch, url string) {
 
 	type Payload struct {
 		Text        string `json:"text"`
@@ -55,15 +55,15 @@ func Notify(patch Patch, url string) {
 		AvatarURL   string `json:"avatar_url"`
 	}
 	var msg string
-	if patch.PatchNumber == "" {
+	if ptch.PatchNumber == "" {
 		msg = "DotaPatchBot online"
 	} else {
-		log.Printf("Patch %v found, notifying\n", patch.PatchNumber)
+		log.Printf("Patch %v found, notifying\n", ptch.PatchNumber)
 
-		if patch.PatchWebsite != "" {
-			msg = fmt.Sprintf("Patch %v released, see website:\nhttps://www.dota2.com/%v", patch.PatchNumber, patch.PatchWebsite)
+		if ptch.PatchWebsite != "" {
+			msg = fmt.Sprintf("Patch %v released, see website:\nhttps://www.dota2.com/%v", ptch.PatchNumber, ptch.PatchWebsite)
 		} else {
-			msg = fmt.Sprintf("Patch %v Released", patch.PatchNumber)
+			msg = fmt.Sprintf("Patch %v Released", ptch.PatchNumber)
 		}
 	}
 	if url != "" {
@@ -101,37 +101,37 @@ func Notify(patch Patch, url string) {
 func main() {
 	hookPtr := flag.String("hook", "", "the webhook to notify")
 	sourcePtr := flag.String("url", "https://www.dota2.com/datafeed/patchnoteslist", "url to fetch patchnotes from")
-	patch_list := PatchList{}
-	var current_patch Patch
+	patchlist := patchList{}
+	var currentPatch patch
 
 	flag.Parse()
-	LoadPatches(&patch_list, *sourcePtr)
+	loadPatches(&patchlist, *sourcePtr)
 
-	if len(patch_list.Patches) <= 0 {
+	if len(patchlist.Patches) <= 0 {
 		log.Fatal("error getting initial patch list")
 	}
 
-	current_patch = patch_list.Patches[len(patch_list.Patches)-1]
+	currentPatch = patchlist.Patches[len(patchlist.Patches)-1]
 	log.Println("Started bot, loaded patch list")
-	log.Printf("Starting on patch %v", current_patch.PatchNumber)
+	log.Printf("Starting on patch %v", currentPatch.PatchNumber)
 	if *hookPtr == "" {
 		log.Println("No webhook set, not notifying")
 	} else {
 		log.Printf("Notifying %v", *hookPtr)
 	}
-	Notify(Patch{}, *hookPtr)
+	notify(patch{}, *hookPtr)
 
 	for {
 		time.Sleep(30 * time.Second)
-		LoadPatches(&patch_list, *sourcePtr)
-		if len(patch_list.Patches) > 0 {
-			newest_patch := patch_list.Patches[len(patch_list.Patches)-1]
-			if newest_patch.PatchNumber != current_patch.PatchNumber {
-				current_patch = newest_patch
+		loadPatches(&patchlist, *sourcePtr)
+		if len(patchlist.Patches) > 0 {
+			newestPatch := patchlist.Patches[len(patchlist.Patches)-1]
+			if newestPatch.PatchNumber != currentPatch.PatchNumber {
+				currentPatch = newestPatch
 				if *hookPtr != "" {
-					Notify(current_patch, *hookPtr)
+					notify(currentPatch, *hookPtr)
 				} else {
-					log.Printf("Patch %v found, no webhook\n", current_patch.PatchNumber)
+					log.Printf("Patch %v found, no webhook\n", currentPatch.PatchNumber)
 				}
 			}
 		}
