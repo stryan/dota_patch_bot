@@ -81,19 +81,19 @@ func notify(ptch patch, url string) {
 
 		payloadBytes, err := json.Marshal(data)
 		if err != nil {
-			// handle err
+			log.Fatalf("Can't create webhook notice; failing since that means drastic data format change")
 		}
 		body := bytes.NewReader(payloadBytes)
 
 		req, err := http.NewRequest("POST", url, body)
 		if err != nil {
-			// handle err
+			log.Fatalf("Either POST was mispelled or couldn't create a context")
 		}
 		req.Header.Set("Content-Type", "application/json")
 
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
-			// handle err
+			log.Println("error posting to webhook")
 		}
 		defer resp.Body.Close()
 	}
