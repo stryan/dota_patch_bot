@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -105,6 +106,16 @@ func main() {
 	var currentPatch patch
 
 	flag.Parse()
+	if *hookPtr == "" {
+		if val, ok := os.LookupEnv("DOTA_WEBHOOK"); ok {
+			*hookPtr = val
+		}
+	}
+	if *sourcePtr == "" {
+		if val, ok := os.LookupEnv("DOTA_PATCH_SOURCE"); ok {
+			*sourcePtr = val
+		}
+	}
 	loadPatches(&patchlist, *sourcePtr)
 
 	if len(patchlist.Patches) <= 0 {
