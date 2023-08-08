@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -37,7 +37,7 @@ func loadPatches(pl *patchList, url string) {
 	}
 	defer res.Body.Close()
 
-	body, readErr := ioutil.ReadAll(res.Body)
+	body, readErr := io.ReadAll(res.Body)
 	if readErr != nil {
 		log.Fatal(readErr)
 	}
@@ -48,7 +48,6 @@ func loadPatches(pl *patchList, url string) {
 }
 
 func notify(ptch patch, url string) {
-
 	type Payload struct {
 		Text        string `json:"text"`
 		Format      string `json:"format"`
@@ -96,9 +95,12 @@ func notify(ptch patch, url string) {
 		if err != nil {
 			log.Println("error posting to webhook")
 		}
-		defer resp.Body.Close()
+		if resp.Body != nil {
+			resp.Body.Close()
+		}
 	}
 }
+
 func main() {
 	hookPtr := flag.String("hook", "", "the webhook to notify")
 	sourcePtr := flag.String("url", "https://www.dota2.com/datafeed/patchnoteslist", "url to fetch patchnotes from")
@@ -147,5 +149,4 @@ func main() {
 			}
 		}
 	}
-
 }
