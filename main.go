@@ -50,7 +50,6 @@ func loadPatches(pl *patchList, url string) {
 func notify(ptch patch, url string) {
 	type Payload struct {
 		Text        string `json:"text"`
-		Format      string `json:"format"`
 		DisplayName string `json:"displayName"`
 		AvatarURL   string `json:"avatar_url"`
 	}
@@ -67,14 +66,8 @@ func notify(ptch patch, url string) {
 		}
 	}
 	if url != "" {
-		data := struct {
-			Text        string `json:"text"`
-			Format      string `json:"format"`
-			DisplayName string `json:"displayName"`
-			AvatarURL   string `json:"avatar_url"`
-		}{
+		data := Payload{
 			msg,
-			"plain",
 			"DotaPatchBot",
 			"https://i.pinimg.com/originals/8a/8b/50/8a8b50da2bc4afa933718061fe291520.jpg",
 		}
@@ -84,20 +77,12 @@ func notify(ptch patch, url string) {
 			log.Fatalf("Can't create webhook notice; failing since that means drastic data format change")
 		}
 		body := bytes.NewReader(payloadBytes)
-
-		req, err := http.NewRequest("POST", url, body)
-		if err != nil {
-			log.Fatalf("Either POST was mispelled or couldn't create a context")
-		}
-		req.Header.Set("Content-Type", "application/json")
-
-		resp, err := http.DefaultClient.Do(req)
+		resp, err := http.Post(url, "application/json", body)
 		if err != nil {
 			log.Println("error posting to webhook")
+			return
 		}
-		if resp.Body != nil {
-			resp.Body.Close()
-		}
+		defer resp.Body.Close()
 	}
 }
 
